@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test de API - Zonas</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        input, select, textarea, button { margin: 5px; display: block; width: 100%; }
+        label { font-weight: bold; margin-top: 10px; }
+        .zona { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+<h1>Test API Zonas</h1>
+
+<label>Token JWT</label>
+<input id="token" type="text" placeholder="Bearer ey..."/>
+
+<h2>Crear Zona</h2>
+<form id="crearZonaForm">
+    <label>Nombre</label>
+    <input id="nombre" type="text" />
+    <label>Tipo</label>
+    <select id="tipo">
+        <option value="FLORA">FLORA</option>
+        <option value="FAUNA">FAUNA</option>
+    </select>
+    <label>Descripción</label>
+    <textarea id="descripcion"></textarea>
+    <label>Latitud</label>
+    <input id="latitud" type="number" step="any" />
+    <label>Longitud</label>
+    <input id="longitud" type="number" step="any" />
+    <label>Imágenes</label>
+    <input id="imagenes" type="file" multiple />
+    <button type="submit">Crear Zona</button>
+</form>
+
+<h2>Acciones</h2>
+<button onclick="listarZonas()">Listar Zonas</button>
+<button onclick="filtrarPorTipo('FLORA')">Filtrar por FLORA</button>
+<button onclick="filtrarPorTipo('FAUNA')">Filtrar por FAUNA</button>
+<input id="zonaId" placeholder="ID de la zona" />
+<button onclick="obtenerZona()">Obtener Zona</button>
+<button onclick="eliminarZona()">Eliminar Zona</button>
+
+<div id="zonas"></div>
+
+<script>
+    const API_URL = 'http://localhost:8092/api/zonas';
+
+    document.getElementById('crearZonaForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const token = document.getElementById('token').value;
+
+        const formData = new FormData();
+        const zona = {
+            nombre: document.getElementById('nombre').value,
+            tipo: document.getElementById('tipo').value,
+            descripcion: document.getElementById('descripcion').value,
+            latitud: parseFloat(document.getElementById('latitud').value),
+            longitud: parseFloat(document.getElementById('longitud').value)
+        };
+
+        formData.append("zona", new Blob([JSON.stringify(zona)], { type: 'application/json' }));
+
+        const files = document.getElementById('imagenes').files;
+        for (let file of files) {
+            formData.append("imagenes", file);
+        }
+
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Authorization': token },
+            body: formData
+        });
+
+        const data = await res.json();
+        alert("Zona creada: " + JSON.stringify(data));
+    });
+
+    async function listarZonas() {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        renderZonas(data);
+    }
+
+    async function filtrarPorTipo(tipo) {
+        const res = await fetch(`${API_URL}/tipo/${tipo}`);
+        const data = await res.json();
+        renderZonas(data);
+    }
+
+    async function obtenerZona() {
+        const id = document.getElementById('zonaId').value;
+        const res = await fetch(`${API_URL}/${id}`);
+        const data = await res.json();
+        renderZonas([data]);
+    }
+
+    async function eliminarZona() {
+        const id = document.getElementById('zonaId').value;
+        const token = document.getElementById('token').value;
+
+        const res = await fetch(`${API_URL}/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': token }
+        });
+
+        const mensaje = await res.text();
+        alert(mensaje);
+    }
+
+    function renderZonas(zonas) {
+        const contenedor = document.getElementById('zonas');
+        contenedor.innerHTML = '';
+        zonas.forEach(z => {
+            const div = document.createElement('div');
+            div.classList.add('zona');
+            div.innerHTML = `
+                    <strong>ID:</strong> ${z.id}<br/>
+                    <strong>Nombre:</strong> ${z.nombre}<br/>
+                    <strong>Tipo:</strong> ${z.tipo}<br/>
+                    <strong>Descripción:</strong> ${z.descripcion}<br/>
+                    <strong>Lat/Lon:</strong> ${z.latitud}, ${z.longitud}<br/>
+                    <strong>Imágenes:</strong> ${z.imagenes?.map(i => `<img src="${i}" width="50"/>`).join(' ')}
+                `;
+            contenedor.appendChild(div);
+        });
+    }
+</script>
+</body>
+</html>
