@@ -51,6 +51,10 @@ public class SecurityConfig {
                                 "/api/zonas",
                                 "/api/zonas/{id}",
                                 "/api/zonas/tipo/**",
+                                "/api/estaciones",
+                                "/api/estaciones/{id}",
+                                "/api/eventos/",
+                                "/api/eventos/{id}",
                                 "/uploads/**"
                         ).permitAll()
                         .anyRequest().authenticated()
@@ -61,4 +65,5 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 }

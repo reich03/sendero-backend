@@ -9,7 +9,7 @@ import java.util.function.Function;
 
 @Component
 public class JwtUtil {
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret:sendero-super-secreta-1234567890}")
     private String SECRET_KEY;
 
     private final long EXPIRATION_TIME = 1000 * 60 * 60 * 10;
