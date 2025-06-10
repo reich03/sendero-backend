@@ -6,6 +6,7 @@ import com.sendero.backend.model.ZonaTipo;
 import com.sendero.backend.repository.ZonaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +23,8 @@ import java.util.UUID;
 public class ZonaService {
 
     private final ZonaRepository zonaRepository;
-
+    @Lazy
+    private final AuditoriaService auditoriaService;
     @Value("${app.upload.dir:uploads/zonas}")
     private String uploadDir;
 
@@ -68,7 +70,9 @@ public class ZonaService {
         zona.setCreadoPor(username);
         zona.setImagenes(request.getImagenes());
 
-        return zonaRepository.save(zona);
+        Zona guardada = zonaRepository.save(zona);
+        auditoriaService.registrar(username, "CREAR", "Zona", guardada.getId().toString(), "Zona creada: " + guardada.getNombre());
+        return guardada;
     }
 
     public Zona actualizarZona(Long id, ZonaRequest request) {
@@ -96,6 +100,9 @@ public class ZonaService {
     public List<Zona> listarPorTipo(ZonaTipo tipo) {
         return zonaRepository.findByTipo(tipo);
     }
+    public List<Zona> obtenerZonasPorIds(List<Long> zonaIds) {
+        return zonaRepository.findAllById(zonaIds);
+    }
 
     public Zona obtenerZona(Long id) {
         return zonaRepository.findById(id)
@@ -103,6 +110,9 @@ public class ZonaService {
     }
 
     public void eliminarZona(Long id) {
+        Zona zona = zonaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Zona no encontrada con ID: " + id));
         zonaRepository.deleteById(id);
+        auditoriaService.registrar(zona.getCreadoPor(), "ELIMINAR", "Zona", id.toString(), "Zona eliminada: " + zona.getNombre());
     }
 }
